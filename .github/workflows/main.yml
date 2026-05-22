@@ -1,0 +1,49 @@
+name: Build Godot Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install unzip
+      run: sudo apt-get install unzip -y
+
+    - name: Extract Godot Project
+      run: unzip game-source-project.zip -d project
+
+    - name: Download Godot
+      run: |
+        wget https://downloads.tuxfamily.org/godotengine/4.2.2/Godot_v4.2.2-stable_linux.x86_64.zip
+        unzip Godot_v4.2.2-stable_linux.x86_64.zip
+        chmod +x Godot_v4.2.2-stable_linux.x86_64
+
+    - name: Download Godot Export Templates
+      run: |
+        wget https://downloads.tuxfamily.org/godotengine/4.2.2/Godot_v4.2.2-stable_export_templates.tpz
+        mkdir -p ~/.local/share/godot/export_templates/4.2.2.stable
+        unzip Godot_v4.2.2-stable_export_templates.tpz -d ~/.local/share/godot/export_templates/4.2.2.stable
+
+    - name: Install Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Create Build Folder
+      run: mkdir -p project/build
+
+    - name: Export APK
+      run: |
+        ./Godot_v4.2.2-stable_linux.x86_64 \
+        --headless \
+        --path project \
+        --export-release Android build/game.apk
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-apk
+        path: project/build/game.apk
